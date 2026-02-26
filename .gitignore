@@ -1,0 +1,23 @@
+# Rust
+/target
+
+# Compiled C/C++ / MPI artifacts
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.out
+mpi_test
+
+# Python
+__pycache__/
+*.py[cod]
+
+# IDEs / editors
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
