@@ -10,6 +10,11 @@
 *.out
 mpi_test
 
+# Lab exercises (compiled MPI programs)
+Lab01/Lab1Ex1
+Lab01/Lab1Ex2
+Lab01/Lab1Ex3
+
 # Python
 __pycache__/
 *.py[cod]
