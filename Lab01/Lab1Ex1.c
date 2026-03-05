@@ -4,13 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Returns 1 if n is prime, 0 otherwise */
 int is_prime(int n) {
     if (n < 2) return 0;
-    if (n == 2) return 1;
-    if (n % 2 == 0) return 0;
-    for (int i = 3; i * i <= n; i += 2)
-        if (n % i == 0) return 0;
+    for (int d = 2; d * d <= n; d++)
+        if (n % d == 0) return 0;
     return 1;
 }
 
@@ -21,12 +18,19 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &procid);
 
-    int N = argc > 1 ? atoi(argv[1]) : 100;
+    // Default N=100, but can be set via command line argument
+    int N = 100;
+    if (argc > 1) N = atoi(argv[1]);
 
     /* Divide [2, N) into blocks, one per process */
     int range = N / numprocs;
     int start = procid * range;
-    int end = (procid == numprocs - 1) ? N : (procid + 1) * range;
+    int end = (procid + 1) * range;
+    if (procid == numprocs - 1) {
+        end = N;
+    }
+    // This does this: Process 0 checks [0, range), 
+    // Process 1 checks [range, 2*range), ..., Process M-1 checks [(M-1)*range, N)
     if (procid == 0) start = 2; /* skip 0 and 1 */
 
     /* Each process checks and prints its own primes */

@@ -12,14 +12,21 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &procid);
 
-    int m = argc > 1 ? atoi(argv[1]) : 100;
-    if (m < 100) m = 100; /* enforce m >= 100 */
+    // Default m=100, but can be set via command line argument; enforce m>=100
+    int m = 100;
+    if (argc > 1) {
+        m = atoi(argv[1]);
+        if (m < 100) {
+            m = 100;
+        }
+    }
 
-    double start = MPI_Wtime();
-    srand(time(NULL) + procid * 1000); /* unique seed per process */
+    double start = MPI_Wtime(); // start timer
+    srand(time(NULL) + procid * 1000); /* random seed per process */
 
     long long sum = 0;
     printf("Process %d numbers: ", procid);
+    // Generate m random numbers, print them, and compute their sum
     for (int i = 0; i < m; i++) {
         int val = rand() % 1001;
         printf("%d ", val);

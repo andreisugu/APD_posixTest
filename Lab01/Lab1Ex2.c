@@ -14,7 +14,9 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &procid);
 
-    int array_size = argc > 1 ? atoi(argv[1]) : 20;
+    // Default array size is 20, but can be set via command line argument
+    int array_size = 20;
+    if (argc > 1) array_size = atoi(argv[1]);
     int search_element;
     int *array = (int *)malloc(array_size * sizeof(int));
 
@@ -43,7 +45,10 @@ int main(int argc, char *argv[]) {
     /* Each process searches its chunk; local_pos = array_size means not found */
     int chunk = array_size / numprocs;
     int start = procid * chunk;
-    int end = (procid == numprocs - 1) ? array_size : start + chunk;
+    int end = start + chunk;
+    if (procid == numprocs - 1) {
+        end = array_size;
+    }
     int local_pos = array_size;
 
     for (int i = start; i < end; i++)
@@ -54,6 +59,9 @@ int main(int argc, char *argv[]) {
         MPI_Send(&local_pos, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
     } else {
         /* Process 0 collects results and picks the earliest position */
+        /* To be brief: Process 0 receives the local positions from all workers
+        and determines the best (smallest) position where the element was found.
+        If none of the workers found the element, it will report "Not found."*/
         int best = local_pos;
         for (int i = 1; i < numprocs; i++) {
             int pos;
