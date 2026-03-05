@@ -1,7 +1,10 @@
+/* Ex1: Print all prime numbers less than N using M processes.
+   Each process gets a block of numbers to check independently. */
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Returns 1 if n is prime, 0 otherwise */
 int is_prime(int n) {
     if (n < 2) return 0;
     if (n == 2) return 1;
@@ -13,7 +16,6 @@ int is_prime(int n) {
 
 int main(int argc, char *argv[]) {
     int numprocs, procid;
-    MPI_Status status;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -21,23 +23,16 @@ int main(int argc, char *argv[]) {
 
     int N = argc > 1 ? atoi(argv[1]) : 100;
 
-    /* Cyclic distribution: process i checks 2+i, 2+i+numprocs, ... */
-    int local_count = 0;
-    for (int num = 2 + procid; num < N; num += numprocs)
-        if (is_prime(num))
-            local_count++;
+    /* Divide [2, N) into blocks, one per process */
+    int range = N / numprocs;
+    int start = procid * range;
+    int end = (procid == numprocs - 1) ? N : (procid + 1) * range;
+    if (procid == 0) start = 2; /* skip 0 and 1 */
 
-    if (procid != 0) {
-        MPI_Send(&local_count, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    } else {
-        int total = local_count;
-        for (int i = 1; i < numprocs; i++) {
-            int count;
-            MPI_Recv(&count, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
-            total += count;
-        }
-        printf("Total primes less than %d: %d\n", N, total);
-    }
+    /* Each process checks and prints its own primes */
+    for (int i = start; i < end; i++)
+        if (is_prime(i))
+            printf("[Process %d] Prime: %d\n", procid, i);
 
     MPI_Finalize();
     return 0;
