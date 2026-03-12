@@ -23,15 +23,15 @@ int main(int argc, char *argv[]) {
     if (argc > 1) N = atoi(argv[1]);
 
     /* Divide [2, N) into blocks, one per process */
-    int range = N / numprocs;
-    int start = procid * range;
-    int end = (procid + 1) * range;
+    int range = N / numprocs; // Per process, how many numbers to check
+    int start = procid * range; // Where we start checking from
+    int end = (procid + 1) * range; // Where we stop checking (exclusive)
     if (procid == numprocs - 1) {
         end = N;
     }
     // This does this: Process 0 checks [0, range), 
     // Process 1 checks [range, 2*range), ..., Process M-1 checks [(M-1)*range, N)
-    if (procid == 0) start = 2; /* skip 0 and 1 */
+    if (procid == 0) start = 2; /* skip 0 and 1 because they're not primes! */
 
     /* Each process checks and prints its own primes */
     for (int i = start; i < end; i++)

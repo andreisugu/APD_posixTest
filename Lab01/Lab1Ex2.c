@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
             printf("%d ", array[i]);
         }
         printf("\n");
+        // If a search element is provided as a command line argument, use it; otherwise pick a random element from the array
         search_element = argc > 2 ? atoi(argv[2]) : array[rand() % array_size];
         printf("Searching for: %d\n", search_element);
         /* Send array and target to all workers */

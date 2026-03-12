@@ -1,0 +1,91 @@
+
+# Lab 2: MPI Collective Communication Exercises
+
+### COMPILARE
+
+mpicc Lab2_Ex1a.c -o Lab2_Ex1a
+mpicc Lab2_Ex1b.c -o Lab2_Ex1b
+mpicc Lab2_Ex2.c  -o Lab2_Ex2
+mpicc Lab2_Ex3.c  -o Lab2_Ex3
+
+### EXERCITIUL 1a: Cautarea cu MPI_Bcast + MPI_Reduce (MAX)
+
+Descriere: Cauta un element intr-un tablou. Afiseaza indexul MAXIM.
+
+--- Test cu 2 procese ---
+mpirun -np 2 ./Lab2_Ex1a
+
+--- Test cu 4 procese (standard) ---
+mpirun -np 4 ./Lab2_Ex1a
+
+--- Test cu 8 procese (demonstreaza load balancing pe mai multi procesori) ---
+mpirun -np 8 ./Lab2_Ex1a
+
+--- Test pe localhost doar (restrictie topologie) ---
+mpirun -np 4 --host localhost ./Lab2_Ex1a
+
+### EXERCITIUL 1b: Cautarea cu MPI_Scatter + MPI_Gather
+
+Descriere: Cauta element. Afiseaza TOATE pozitiile si care proces a gata-o.
+
+--- Test cu 2 procese (show parallelism overhead) ---
+mpirun -np 2 ./Lab2_Ex1b
+
+--- Test cu 4 procese (balanced load per processor) ---
+mpirun -np 4 ./Lab2_Ex1b
+
+--- Test cu 5 procese (unequal distribution - 20 elemente / 5 ranks) ---
+mpirun -np 5 ./Lab2_Ex1b
+
+--- Test cu single process (sequential baseline) ---
+mpirun -np 1 ./Lab2_Ex1b
+
+### EXERCITIUL 2: Adunare matrici cu MPI_Scatter + MPI_Gather
+
+Descriere: Aduna doua matrici (4x5). Valideaza rezultatul.
+
+--- Test cu 2 procese (2 linii per proces) ---
+mpirun -np 2 ./Lab2_Ex2
+
+--- Test cu 4 procese (1 linie per proces) ---
+mpirun -np 4 ./Lab2_Ex2
+
+--- Test minimal: single rank (no distribution overhead) ---
+mpirun -np 1 ./Lab2_Ex2
+
+--- Test maximal: 8 ranks (more processes than rows, some idle) ---
+mpirun -np 8 ./Lab2_Ex2
+
+### EXERCITIUL 3: Inversare culori imagine RGBA cu MPI_Scatter + MPI_Gather
+
+Descriere: Inverseaza RGB, pastreaza Alpha. Testeaza imagini de diferite dimensiuni.
+
+--- Test cu 2 procese (simple, few pixels) ---
+mpirun -np 2 ./Lab2_Ex3
+
+--- Test cu 4 procese (standard) ---
+mpirun -np 4 ./Lab2_Ex3
+
+--- Test cu 8 procese (demonstreaza graceful degradation cu putini pixeli) ---
+mpirun -np 8 ./Lab2_Ex3
+
+--- Test binding to cores (optimizare performanta) ---
+mpirun -np 4 --bind-to core ./Lab2_Ex3
+
+### TESTE AVANSATE (SETARI MPI DIVERSE)
+
+--- Toate exercitiile cu verbose output ---
+mpirun -np 4 -v ./Lab2_Ex1a
+mpirun -np 4 -v ./Lab2_Ex1b
+mpirun -np 4 -v ./Lab2_Ex2
+mpirun -np 4 -v ./Lab2_Ex3
+
+--- Teste cu error propagation check (MPI_Abort safety) ---
+mpirun -np 3 ./Lab2_Ex1b  # 20 elemete / 3 ranks - verificare erori
+
+--- Performance comparison: sequential vs parallel ---
+echo "Sequential (1 rank):" && mpirun -np 1 ./Lab2_Ex2
+echo "Parallel 4 ranks:"    && mpirun -np 4 ./Lab2_Ex2
+echo "Parallel 2 ranks:"    && mpirun -np 2 ./Lab2_Ex2
+
+================================================================================
