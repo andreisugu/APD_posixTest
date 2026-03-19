@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
         printf("\nCautam elementul: %d\n", TARGET);
     }
 
-    /* Broadcast array-ul catre toti procesii */
+    /* Broadcast array-ul catre totate procesele */
     MPI_Bcast(array, ARRAY_SIZE, MPI_INT, 0, MPI_COMM_WORLD);
 
     /* Fiecare proces cauta in bucata sa din array */
