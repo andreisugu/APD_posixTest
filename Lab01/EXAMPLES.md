@@ -30,6 +30,9 @@ mpirun -n 3 ./Lab1Ex2 20 50
 
 # Example 3: size=30, random search, 4 processes
 mpirun -n 4 ./Lab1Ex2 30
+
+# Example 4: size=100, random search, 5 processes
+mpirun -n 5 ./Lab1Ex2 100
 ```
 
 ---
