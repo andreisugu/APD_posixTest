@@ -28,25 +28,28 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define N      6    /* marimea vectorului (multiplu de procs_per_group) */
-#define NPROCS 6    /* 2 procese/grup × 3 grupuri                       */
+#define N 6      /* marimea vectorului (multiplu de procs_per_group) */
+#define NPROCS 6 /* 2 procese/grup × 3 grupuri                       */
 
 /* Tag-uri MPI pentru a distinge mesajele intre grupuri                  */
-#define TAG_G1_TO_G2  100  /* mesaj de la Grupul 1 la Grupul 2          */
-#define TAG_G2_TO_G3  200  /* mesaj de la Grupul 2 la Grupul 3          */
+#define TAG_G1_TO_G2 100 /* mesaj de la Grupul 1 la Grupul 2          */
+#define TAG_G2_TO_G3 200 /* mesaj de la Grupul 2 la Grupul 3          */
 
 /* Sortare simpla (bubble sort) */
-void bubble_sort(double *arr, int n) {
+void bubble_sort(double *arr, int n)
+{
     for (int i = 0; i < n - 1; i++)
         for (int j = 0; j < n - i - 1; j++)
-            if (arr[j] > arr[j + 1]) {
+            if (arr[j] > arr[j + 1])
+            {
                 double tmp = arr[j];
-                arr[j]     = arr[j + 1];
+                arr[j] = arr[j + 1];
                 arr[j + 1] = tmp;
             }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
     MPI_Init(&argc, &argv);
 
@@ -54,7 +57,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (size != NPROCS) {
+    if (size != NPROCS)
+    {
         if (rank == 0)
             printf("Eroare: rulati cu exact %d procese!\n", NPROCS);
         MPI_Finalize();
@@ -74,13 +78,13 @@ int main(int argc, char *argv[]) {
      * Comunicarea INTER-grup se face prin MPI_COMM_WORLD.
      * ========================================================== */
     int procs_per_group = 2;
-    int group_id = rank / procs_per_group;  /* 0, 1, sau 2               */
+    int group_id = rank / procs_per_group; /* 0, 1, sau 2               */
 
     /* Array cu rangurile proceselor din fiecare grup                    */
     int ranks_g[3][2] = {
-        {0, 1},   /* Grupul 1 (G1): normalizare  */
-        {2, 3},   /* Grupul 2 (G2): sqrt         */
-        {4, 5}    /* Grupul 3 (G3): sortare      */
+        {0, 1}, /* Grupul 1 (G1): normalizare  */
+        {2, 3}, /* Grupul 2 (G2): sqrt         */
+        {4, 5}  /* Grupul 3 (G3): sortare      */
     };
 
     /* Extragem grupul global si cream subgrupul local */
@@ -111,7 +115,7 @@ int main(int argc, char *argv[]) {
      *   proc 0: data[0] = 10.0   proc 1: data[0] = 2.0
      *   (G2 si G3 primesc date prin comunicare pipeline)
      * ========================================================== */
-    int elems_per_proc = N / NPROCS;   /* = 1 element per proces         */
+    int elems_per_proc = N / NPROCS; /* = 1 element per proces         */
     double *data = malloc(elems_per_proc * sizeof(double));
 
     /* Date initiale brute pentru intreg vectorul: */
@@ -130,10 +134,12 @@ int main(int argc, char *argv[]) {
      *   d) Proc 0 si 1 din G1 trimit datele normalizate catre
      *      proc 2 si 3 din G2 (corespunzator, prin COMM_WORLD)
      * ========================================================== */
-    if (group_id == 0) {
+    if (group_id == 0)
+    {
 
         /* Initializare: proc cu new_rank r are elementul initial_data[r] */
-        for (int i = 0; i < elems_per_proc; i++) {
+        for (int i = 0; i < elems_per_proc; i++)
+        {
             data[i] = initial_data[new_rank * elems_per_proc + i];
         }
 
@@ -142,9 +148,12 @@ int main(int argc, char *argv[]) {
         /* Calculam minimul si maximul global in cadrul G1 */
         double local_min = data[0];
         double local_max = data[0];
-        for (int i = 1; i < elems_per_proc; i++) {
-            if (data[i] < local_min) local_min = data[i];
-            if (data[i] > local_max) local_max = data[i];
+        for (int i = 1; i < elems_per_proc; i++)
+        {
+            if (data[i] < local_min)
+                local_min = data[i];
+            if (data[i] > local_max)
+                local_max = data[i];
         }
 
         double global_min, global_max;
@@ -158,7 +167,8 @@ int main(int argc, char *argv[]) {
                       MPI_DOUBLE, MPI_MAX, my_comm);
 
         /* Normalizam elementele: x_norm = (x - min) / (max - min)      */
-        for (int i = 0; i < elems_per_proc; i++) {
+        for (int i = 0; i < elems_per_proc; i++)
+        {
             data[i] = (data[i] - global_min) / (global_max - global_min);
         }
 
@@ -186,7 +196,8 @@ int main(int argc, char *argv[]) {
      *   b) Aplica sqrt fiecarui element
      *   c) Trimite rezultatele catre G3
      * ========================================================== */
-    else if (group_id == 1) {
+    else if (group_id == 1)
+    {
 
         /* Sursa: rangul global corespunzator din G1 = new_rank          */
         int src_g1 = new_rank;
@@ -197,7 +208,8 @@ int main(int argc, char *argv[]) {
                rank, src_g1, data[0]);
 
         /* Aplicam sqrt fiecarui element                                 */
-        for (int i = 0; i < elems_per_proc; i++) {
+        for (int i = 0; i < elems_per_proc; i++)
+        {
             data[i] = sqrt(data[i]);
         }
 
@@ -223,7 +235,8 @@ int main(int argc, char *argv[]) {
      *   b) Aduna toate elementele la procesul 0 din G3 (MPI_Gather)
      *   c) Proc 0 din G3 sorteaza si afiseaza vectorul final
      * ========================================================== */
-    else { /* group_id == 2 */
+    else
+    { /* group_id == 2 */
 
         /* Sursa: rangul global corespunzator din G2 = 2 + new_rank      */
         int src_g2 = 2 + new_rank;
@@ -237,10 +250,11 @@ int main(int argc, char *argv[]) {
          * MPI_Gather colecteaza elems_per_proc elemente de la fiecare
          * proces din my_comm si le concateneaza la radacina (new_rank 0).
          * Buffer-ul all_data are N/3 * procs_per_group = 2 elemente.   */
-        int group_n = elems_per_proc * procs_per_group;  /* 2 elemente   */
+        int group_n = elems_per_proc * procs_per_group; /* 2 elemente   */
         double *all_data = NULL;
 
-        if (new_rank == 0) {
+        if (new_rank == 0)
+        {
             all_data = malloc(group_n * sizeof(double));
         }
 
@@ -252,15 +266,17 @@ int main(int argc, char *argv[]) {
                    all_data,       /* buffer destinatie (la new_rank=0)   */
                    elems_per_proc, /* nr. elemente asteptate de la fiecare*/
                    MPI_DOUBLE,
-                   0,              /* radacina grupului = new_rank 0      */
-                   my_comm);       /* comunicatorul GRUPULUI G3 !!!       */
+                   0,        /* radacina grupului = new_rank 0      */
+                   my_comm); /* comunicatorul GRUPULUI G3 !!!       */
 
-        if (new_rank == 0) {
+        if (new_rank == 0)
+        {
             /* Sortam vectorul complet al grupului */
             bubble_sort(all_data, group_n);
 
             printf("\n[G3, proc %d] Vectorul final dupa sortare:\n", rank);
-            for (int i = 0; i < group_n; i++) {
+            for (int i = 0; i < group_n; i++)
+            {
                 printf("  [%d] = %.4f\n", i, all_data[i]);
             }
             free(all_data);
@@ -274,7 +290,8 @@ int main(int argc, char *argv[]) {
      * ========================================================== */
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         printf("\n=== PIPELINE COMPLET ===\n");
         printf("Date brute   : {10, 2, 8, 4, 6, 5}\n");
         printf("Dupa G1 norm : valorile aduse in [0, 1]\n");

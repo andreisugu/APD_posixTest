@@ -29,10 +29,11 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#define NPROCS 8   /* Numar fix de procese (2 per grup × 4 grupuri)    */
-#define N      16  /* Marimea vectorului (multiplu de NPROCS)           */
+#define NPROCS 8 /* Numar fix de procese (2 per grup × 4 grupuri)    */
+#define N 16     /* Marimea vectorului (multiplu de NPROCS)           */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
     MPI_Init(&argc, &argv);
 
@@ -41,7 +42,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     /* Verificam numarul corect de procese */
-    if (size != NPROCS) {
+    if (size != NPROCS)
+    {
         if (rank == 0)
             printf("Eroare: rulati cu exact %d procese!\n", NPROCS);
         MPI_Finalize();
@@ -57,10 +59,11 @@ int main(int argc, char *argv[]) {
      *   proc 3 -> {7, 8}   | proc 4 -> {9, 10}  | proc 5 -> {11, 12}
      *   proc 6 -> {13, 14} | proc 7 -> {15, 16}
      * ========================================================== */
-    int chunk = N / NPROCS;             /* = 2 elemente per proces          */
+    int chunk = N / NPROCS; /* = 2 elemente per proces          */
     int *local_data = malloc(chunk * sizeof(int));
 
-    for (int i = 0; i < chunk; i++) {
+    for (int i = 0; i < chunk; i++)
+    {
         /* Elementul i al procesului rank este: rank*chunk + i + 1         */
         local_data[i] = rank * chunk + i + 1;
     }
@@ -72,16 +75,19 @@ int main(int argc, char *argv[]) {
      * pentru propriile elemente. Aceste valori vor fi combinate
      * ulterior prin operatii colective in cadrul grupului.
      * ========================================================== */
-    long long local_sum  = 0;
+    long long local_sum = 0;
     long long local_prod = 1;
-    int       local_min  = local_data[0];
-    int       local_max  = local_data[0];
+    int local_min = local_data[0];
+    int local_max = local_data[0];
 
-    for (int i = 0; i < chunk; i++) {
-        local_sum  += local_data[i];
+    for (int i = 0; i < chunk; i++)
+    {
+        local_sum += local_data[i];
         local_prod *= local_data[i];
-        if (local_data[i] < local_min) local_min = local_data[i];
-        if (local_data[i] > local_max) local_max = local_data[i];
+        if (local_data[i] < local_min)
+            local_min = local_data[i];
+        if (local_data[i] > local_max)
+            local_max = local_data[i];
     }
 
     /* ==========================================================
@@ -95,15 +101,15 @@ int main(int argc, char *argv[]) {
      *   Grup 3: proc {6,7}  -> MAXIM
      * ========================================================== */
     int procs_per_group = 2;
-    int group_id = rank / procs_per_group;  /* 0, 1, 2 sau 3               */
+    int group_id = rank / procs_per_group; /* 0, 1, 2 sau 3               */
 
     /* Array cu rangurile proceselor din fiecare grup.
      * Grupul i contine procesele: {i*2, i*2+1}                            */
     int group_ranks[4][2] = {
-        {0, 1},   /* Grup 0: SUMA     */
-        {2, 3},   /* Grup 1: PRODUS   */
-        {4, 5},   /* Grup 2: MINIM    */
-        {6, 7}    /* Grup 3: MAXIM    */
+        {0, 1}, /* Grup 0: SUMA     */
+        {2, 3}, /* Grup 1: PRODUS   */
+        {4, 5}, /* Grup 2: MINIM    */
+        {6, 7}  /* Grup 3: MAXIM    */
     };
 
     /* Extragem grupul global asociat lui MPI_COMM_WORLD.
@@ -148,56 +154,57 @@ int main(int argc, char *argv[]) {
      * MPI_Allreduce combina valorile de la toate procesele
      * din comunicator si distribuie rezultatul tuturor.
      * ========================================================== */
-    long long result_sum  = 0;
+    long long result_sum = 0;
     long long result_prod = 1;
-    int       result_min  = 0;
-    int       result_max  = 0;
+    int result_min = 0;
+    int result_max = 0;
 
-    switch (group_id) {
+    switch (group_id)
+    {
 
-        case 0:
-            /* Grup 0: SUMA - aduna local_sum de la procesele 0 si 1
-             * Procesul 0 are local_sum=3 (1+2), procesul 1 are 7 (3+4)
-             * Rezultat: 3+7 = 10 = suma elementelor {1,2,3,4}            */
-            MPI_Allreduce(&local_sum, &result_sum, 1,
-                          MPI_LONG_LONG, MPI_SUM, my_comm);
-            if (new_rank == 0)
-                printf("[Grup SUMA  ] Suma   elemente {1..4}   = %lld\n",
-                       result_sum);
-            break;
+    case 0:
+        /* Grup 0: SUMA - aduna local_sum de la procesele 0 si 1
+         * Procesul 0 are local_sum=3 (1+2), procesul 1 are 7 (3+4)
+         * Rezultat: 3+7 = 10 = suma elementelor {1,2,3,4}            */
+        MPI_Allreduce(&local_sum, &result_sum, 1,
+                      MPI_LONG_LONG, MPI_SUM, my_comm);
+        if (new_rank == 0)
+            printf("[Grup SUMA  ] Suma   elemente {1..4}   = %lld\n",
+                   result_sum);
+        break;
 
-        case 1:
-            /* Grup 1: PRODUS - inmulteste local_prod de la proc 2 si 3
-             * Proc 2 are local_prod=30 (5*6), proc 3 are 56 (7*8)
-             * Rezultat: 30*56 = 1680 = produsul {5,6,7,8}               */
-            MPI_Allreduce(&local_prod, &result_prod, 1,
-                          MPI_LONG_LONG, MPI_PROD, my_comm);
-            if (new_rank == 0)
-                printf("[Grup PRODUS] Produs elemente {5..8}   = %lld\n",
-                       result_prod);
-            break;
+    case 1:
+        /* Grup 1: PRODUS - inmulteste local_prod de la proc 2 si 3
+         * Proc 2 are local_prod=30 (5*6), proc 3 are 56 (7*8)
+         * Rezultat: 30*56 = 1680 = produsul {5,6,7,8}               */
+        MPI_Allreduce(&local_prod, &result_prod, 1,
+                      MPI_LONG_LONG, MPI_PROD, my_comm);
+        if (new_rank == 0)
+            printf("[Grup PRODUS] Produs elemente {5..8}   = %lld\n",
+                   result_prod);
+        break;
 
-        case 2:
-            /* Grup 2: MINIM - gaseste minimul intre proc 4 si 5
-             * Proc 4 are local_min=9,  proc 5 are local_min=11
-             * Rezultat: min(9, 11) = 9                                   */
-            MPI_Allreduce(&local_min, &result_min, 1,
-                          MPI_INT, MPI_MIN, my_comm);
-            if (new_rank == 0)
-                printf("[Grup MINIM ] Minim  elemente {9..12}  = %d\n",
-                       result_min);
-            break;
+    case 2:
+        /* Grup 2: MINIM - gaseste minimul intre proc 4 si 5
+         * Proc 4 are local_min=9,  proc 5 are local_min=11
+         * Rezultat: min(9, 11) = 9                                   */
+        MPI_Allreduce(&local_min, &result_min, 1,
+                      MPI_INT, MPI_MIN, my_comm);
+        if (new_rank == 0)
+            printf("[Grup MINIM ] Minim  elemente {9..12}  = %d\n",
+                   result_min);
+        break;
 
-        case 3:
-            /* Grup 3: MAXIM - gaseste maximul intre proc 6 si 7
-             * Proc 6 are local_max=14, proc 7 are local_max=16
-             * Rezultat: max(14, 16) = 16                                 */
-            MPI_Allreduce(&local_max, &result_max, 1,
-                          MPI_INT, MPI_MAX, my_comm);
-            if (new_rank == 0)
-                printf("[Grup MAXIM ] Maxim  elemente {13..16} = %d\n",
-                       result_max);
-            break;
+    case 3:
+        /* Grup 3: MAXIM - gaseste maximul intre proc 6 si 7
+         * Proc 6 are local_max=14, proc 7 are local_max=16
+         * Rezultat: max(14, 16) = 16                                 */
+        MPI_Allreduce(&local_max, &result_max, 1,
+                      MPI_INT, MPI_MAX, my_comm);
+        if (new_rank == 0)
+            printf("[Grup MAXIM ] Maxim  elemente {13..16} = %d\n",
+                   result_max);
+        break;
     }
 
     /* ==========================================================
@@ -217,94 +224,100 @@ int main(int argc, char *argv[]) {
     /* Fiecare grup calculeaza si partial_sum/prod/min/max local
      * pentru a permite combinarea globala. Fiecare proces calculeaza
      * toate cele 4 valori, indiferent de grupul sau.                     */
-    if (rank == 0) {
+    if (rank == 0)
+    {
         /* Procesul 0 este liderul Grupului 0 (SUMA).
          * Primeste rezultatele de la liderii celorlalte grupuri.         */
         long long partial_sums[4];
         long long partial_prods[4];
-        int       partial_mins[4];
-        int       partial_maxs[4];
+        int partial_mins[4];
+        int partial_maxs[4];
 
         /* Valorile proprii (din Grupul 0) */
-        partial_sums[0]  = result_sum;
-        partial_prods[0] = local_prod;       /* produsul local al proc 0 */
-        partial_mins[0]  = local_min;
-        partial_maxs[0]  = local_max;
+        partial_sums[0] = result_sum;
+        partial_prods[0] = local_prod; /* produsul local al proc 0 */
+        partial_mins[0] = local_min;
+        partial_maxs[0] = local_max;
 
         /* Primeste de la liderul Grupului 1 (rank global = 2): produs  */
-        MPI_Recv(&partial_sums[1],  1, MPI_LONG_LONG, 2, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_sums[1], 1, MPI_LONG_LONG, 2, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&partial_prods[1], 1, MPI_LONG_LONG, 2, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&partial_mins[1],  1, MPI_INT,       2, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&partial_maxs[1],  1, MPI_INT,       2, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_mins[1], 1, MPI_INT, 2, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_maxs[1], 1, MPI_INT, 2, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         /* Primeste de la liderul Grupului 2 (rank global = 4): minim   */
-        MPI_Recv(&partial_sums[2],  1, MPI_LONG_LONG, 4, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_sums[2], 1, MPI_LONG_LONG, 4, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&partial_prods[2], 1, MPI_LONG_LONG, 4, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&partial_mins[2],  1, MPI_INT,       4, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&partial_maxs[2],  1, MPI_INT,       4, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_mins[2], 1, MPI_INT, 4, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_maxs[2], 1, MPI_INT, 4, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         /* Primeste de la liderul Grupului 3 (rank global = 6): maxim   */
-        MPI_Recv(&partial_sums[3],  1, MPI_LONG_LONG, 6, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_sums[3], 1, MPI_LONG_LONG, 6, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&partial_prods[3], 1, MPI_LONG_LONG, 6, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&partial_mins[3],  1, MPI_INT,       6, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&partial_maxs[3],  1, MPI_INT,       6, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_mins[3], 1, MPI_INT, 6, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&partial_maxs[3], 1, MPI_INT, 6, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         /* Combina rezultatele partiale */
-        long long global_sum  = 0;
+        long long global_sum = 0;
         long long global_prod = 1;
-        int       global_min  = INT_MAX;
-        int       global_max  = INT_MIN;
+        int global_min = INT_MAX;
+        int global_max = INT_MIN;
 
-        for (int g = 0; g < 4; g++) {
-            global_sum  += partial_sums[g];
+        for (int g = 0; g < 4; g++)
+        {
+            global_sum += partial_sums[g];
             global_prod *= partial_prods[g];
-            if (partial_mins[g] < global_min) global_min = partial_mins[g];
-            if (partial_maxs[g] > global_max) global_max = partial_maxs[g];
+            if (partial_mins[g] < global_min)
+                global_min = partial_mins[g];
+            if (partial_maxs[g] > global_max)
+                global_max = partial_maxs[g];
         }
 
         printf("\n=== REZULTATE GLOBALE pentru vectorul [1..%d] ===\n", N);
-        printf("Suma    = %lld  (asteptat: %d)\n", global_sum,  N*(N+1)/2);
+        printf("Suma    = %lld  (asteptat: %d)\n", global_sum, N * (N + 1) / 2);
         printf("Produs  = %lld\n", global_prod);
-        printf("Minim   = %d   (asteptat: 1)\n",  global_min);
-        printf("Maxim   = %d  (asteptat: %d)\n",  global_max, N);
-
-    } else if (new_rank == 0) {
+        printf("Minim   = %d   (asteptat: 1)\n", global_min);
+        printf("Maxim   = %d  (asteptat: %d)\n", global_max, N);
+    }
+    else if (new_rank == 0)
+    {
         /* Liderii grupurilor 1, 2, 3 (rank global 2, 4, 6)
          * trimit TOATE valorile partiale la procesul 0,
          * pentru ca acesta sa poata combina toate operatiile.           */
-        long long my_partial_sum  = local_sum;
+        long long my_partial_sum = local_sum;
         long long my_partial_prod = local_prod;
-        int       my_partial_min  = local_min;
-        int       my_partial_max  = local_max;
+        int my_partial_min = local_min;
+        int my_partial_max = local_max;
 
         /* Trimite catre procesul 0 toate valorile partiale ale grupului */
-        long long group_partial_sum  = 0;
+        long long group_partial_sum = 0;
         long long group_partial_prod = 1;
-        int       group_partial_min  = INT_MAX;
-        int       group_partial_max  = INT_MIN;
+        int group_partial_min = INT_MAX;
+        int group_partial_max = INT_MIN;
 
         /* Reduce in cadrul grupului pentru a obtine valorile grupului   */
-        MPI_Reduce(&my_partial_sum,  &group_partial_sum,  1, MPI_LONG_LONG, MPI_SUM,  0, my_comm);
+        MPI_Reduce(&my_partial_sum, &group_partial_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, my_comm);
         MPI_Reduce(&my_partial_prod, &group_partial_prod, 1, MPI_LONG_LONG, MPI_PROD, 0, my_comm);
-        MPI_Reduce(&my_partial_min,  &group_partial_min,  1, MPI_INT,       MPI_MIN,  0, my_comm);
-        MPI_Reduce(&my_partial_max,  &group_partial_max,  1, MPI_INT,       MPI_MAX,  0, my_comm);
+        MPI_Reduce(&my_partial_min, &group_partial_min, 1, MPI_INT, MPI_MIN, 0, my_comm);
+        MPI_Reduce(&my_partial_max, &group_partial_max, 1, MPI_INT, MPI_MAX, 0, my_comm);
 
         /* Liderul grupului (new_rank==0) trimite la proc 0 */
-        MPI_Send(&group_partial_sum,  1, MPI_LONG_LONG, 0, 10, MPI_COMM_WORLD);
+        MPI_Send(&group_partial_sum, 1, MPI_LONG_LONG, 0, 10, MPI_COMM_WORLD);
         MPI_Send(&group_partial_prod, 1, MPI_LONG_LONG, 0, 11, MPI_COMM_WORLD);
-        MPI_Send(&group_partial_min,  1, MPI_INT,       0, 12, MPI_COMM_WORLD);
-        MPI_Send(&group_partial_max,  1, MPI_INT,       0, 13, MPI_COMM_WORLD);
-
-    } else {
+        MPI_Send(&group_partial_min, 1, MPI_INT, 0, 12, MPI_COMM_WORLD);
+        MPI_Send(&group_partial_max, 1, MPI_INT, 0, 13, MPI_COMM_WORLD);
+    }
+    else
+    {
         /* Procesele non-lideri (new_rank != 0) participa la Reduce
          * din cadrul grupului, dar nu trimit direct la procesul 0.
          * MPI_Reduce este colectiv - TOTI din grup trebuie sa apeleze! */
         long long dummy_ll;
-        int       dummy_i;
-        MPI_Reduce(&local_sum,  &dummy_ll, 1, MPI_LONG_LONG, MPI_SUM,  0, my_comm);
+        int dummy_i;
+        MPI_Reduce(&local_sum, &dummy_ll, 1, MPI_LONG_LONG, MPI_SUM, 0, my_comm);
         MPI_Reduce(&local_prod, &dummy_ll, 1, MPI_LONG_LONG, MPI_PROD, 0, my_comm);
-        MPI_Reduce(&local_min,  &dummy_i,  1, MPI_INT,       MPI_MIN,  0, my_comm);
-        MPI_Reduce(&local_max,  &dummy_i,  1, MPI_INT,       MPI_MAX,  0, my_comm);
+        MPI_Reduce(&local_min, &dummy_i, 1, MPI_INT, MPI_MIN, 0, my_comm);
+        MPI_Reduce(&local_max, &dummy_i, 1, MPI_INT, MPI_MAX, 0, my_comm);
     }
 
     /* ==========================================================

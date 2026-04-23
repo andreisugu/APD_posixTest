@@ -29,12 +29,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define M      4   /* linii in A si C                                    */
-#define K      3   /* coloane in A = linii in B                          */
-#define NN     4   /* coloane in B si C (NN evita conflict cu <limits.h>) */
-#define NPROCS 4   /* 2 procese/grup × 2 grupuri                         */
+#define M 4      /* linii in A si C                                    */
+#define K 3      /* coloane in A = linii in B                          */
+#define NN 4     /* coloane in B si C (NN evita conflict cu <limits.h>) */
+#define NPROCS 4 /* 2 procese/grup × 2 grupuri                         */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
     MPI_Init(&argc, &argv);
 
@@ -42,7 +43,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (size != NPROCS) {
+    if (size != NPROCS)
+    {
         if (rank == 0)
             printf("Eroare: rulati cu exact %d procese!\n", NPROCS);
         MPI_Finalize();
@@ -59,11 +61,14 @@ int main(int argc, char *argv[]) {
      * In practica, A si B ar putea fi citite din fisiere mari
      * sau generate de o etapa anterioara de calcul.
      * ========================================================== */
-    if (rank == 0) {
+    if (rank == 0)
+    {
         /* Initializare A: A[i][j] = i + j + 1 */
         printf("Matricea A (%dx%d):\n", M, K);
-        for (int i = 0; i < M; i++) {
-            for (int j = 0; j < K; j++) {
+        for (int i = 0; i < M; i++)
+        {
+            for (int j = 0; j < K; j++)
+            {
                 A[i][j] = i + j + 1.0;
                 printf("  %5.1f", A[i][j]);
             }
@@ -74,8 +79,10 @@ int main(int argc, char *argv[]) {
          * B[i][j] = 1 daca i==j, altfel 0
          * Asta inseamna C = A × B = A (primele K coloane) + 0 (restul) */
         printf("\nMatricea B (%dx%d) - identitate extinsa:\n", K, NN);
-        for (int i = 0; i < K; i++) {
-            for (int j = 0; j < NN; j++) {
+        for (int i = 0; i < K; i++)
+        {
+            for (int j = 0; j < NN; j++)
+            {
                 B[i][j] = (i == j) ? 1.0 : 0.0;
                 printf("  %5.1f", B[i][j]);
             }
@@ -88,7 +95,7 @@ int main(int argc, char *argv[]) {
      * Fiecare proces are nevoie de ambele matrice pentru a-si calcula
      * propria linie din C = A × B.
      * Trecem pointer la primul element si dimensiunea totala in elemente. */
-    MPI_Bcast(A, M * K,  MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(A, M * K, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(B, K * NN, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     /* ==========================================================
@@ -97,12 +104,12 @@ int main(int argc, char *argv[]) {
      * Grup 0: procesele {0, 1} -> jumatatea superioara a lui C
      * Grup 1: procesele {2, 3} -> jumatatea inferioara a lui C
      * ========================================================== */
-    int procs_per_group = NPROCS / 2;    /* = 2 procese per grup          */
+    int procs_per_group = NPROCS / 2;      /* = 2 procese per grup          */
     int group_id = rank / procs_per_group; /* 0 sau 1                     */
 
     /* Rangurile globale ale proceselor din fiecare grup */
-    int ranks_g0[2] = {0, 1};   /* jumatatea superioara */
-    int ranks_g1[2] = {2, 3};   /* jumatatea inferioara */
+    int ranks_g0[2] = {0, 1}; /* jumatatea superioara */
+    int ranks_g1[2] = {2, 3}; /* jumatatea inferioara */
 
     /* Extragem referinta la grupul global */
     MPI_Group world_group;
@@ -139,7 +146,7 @@ int main(int argc, char *argv[]) {
      * Fiecare proc calculeaza rows_per_proc linii consecutive
      * din jumatatea sa din C.
      * ========================================================== */
-    int half_rows     = M / 2;           /* = 2 linii per grup            */
+    int half_rows = M / 2;                           /* = 2 linii per grup            */
     int rows_per_proc = half_rows / procs_per_group; /* = 1 linie per proc */
 
     /* Linia de start din matricea C pentru acest proces:
@@ -151,13 +158,16 @@ int main(int argc, char *argv[]) {
 
     /* Calculul local al liniei(lor) din C = A × B
      * C[i][j] = suma peste k a A[i][k] * B[k][j]                        */
-    double local_C[1][NN];  /* rows_per_proc = 1, deci un singur rand     */
+    double local_C[1][NN]; /* rows_per_proc = 1, deci un singur rand     */
 
-    for (int i = 0; i < rows_per_proc; i++) {
-        int row = start_row + i;       /* linia absoluta din C            */
-        for (int j = 0; j < NN; j++) {
+    for (int i = 0; i < rows_per_proc; i++)
+    {
+        int row = start_row + i; /* linia absoluta din C            */
+        for (int j = 0; j < NN; j++)
+        {
             local_C[i][j] = 0.0;
-            for (int p = 0; p < K; p++) {
+            for (int p = 0; p < K; p++)
+            {
                 /* Inmultire element cu element si acumulare              */
                 local_C[i][j] += A[row][p] * B[p][j];
             }
@@ -175,31 +185,33 @@ int main(int argc, char *argv[]) {
      *
      * Rezultat la proc 0: C_flat = [linia0 | linia1 | linia2 | linia3]
      * ========================================================== */
-    double C_flat[M * NN];  /* buffer complet, alocat doar la proc 0     */
+    double C_flat[M * NN]; /* buffer complet, alocat doar la proc 0     */
 
     /* Toți procesele trimit rows_per_proc*NN = 1*4 = 4 double-uri
      * Procesul 0 primeste NPROCS * 4 = 16 double-uri (matricea completa) */
-    MPI_Gather(local_C,              /* buffer de trimitere (local)       */
-               rows_per_proc * NN,   /* = 4 double-uri trimise de fiecare */
+    MPI_Gather(local_C,            /* buffer de trimitere (local)       */
+               rows_per_proc * NN, /* = 4 double-uri trimise de fiecare */
                MPI_DOUBLE,
-               C_flat,               /* buffer de receptie (doar la proc 0)*/
-               rows_per_proc * NN,   /* = 4 double-uri primite de la fiecare*/
+               C_flat,             /* buffer de receptie (doar la proc 0)*/
+               rows_per_proc * NN, /* = 4 double-uri primite de la fiecare*/
                MPI_DOUBLE,
-               0,                    /* procesul radacina                 */
+               0, /* procesul radacina                 */
                MPI_COMM_WORLD);
 
     /* ==========================================================
      * PASUL 5: Procesul 0 reconstruieste si afiseaza C
      * ========================================================== */
-    if (rank == 0) {
+    if (rank == 0)
+    {
         /* Reconstruim C din forma liniara (row-major) */
         for (int i = 0; i < M; i++)
             for (int j = 0; j < NN; j++)
                 C[i][j] = C_flat[i * NN + j];
 
         printf("\nMatricea C = A x B (%dx%d):\n", M, NN);
-        for (int i = 0; i < M; i++) {
-            printf("  Linia %d [calculata de Grupul %d]: ", i, i < M/2 ? 0 : 1);
+        for (int i = 0; i < M; i++)
+        {
+            printf("  Linia %d [calculata de Grupul %d]: ", i, i < M / 2 ? 0 : 1);
             for (int j = 0; j < NN; j++)
                 printf("  %5.1f", C[i][j]);
             printf("\n");
