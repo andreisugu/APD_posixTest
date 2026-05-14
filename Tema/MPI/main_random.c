@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 8          /* Numarul de noduri (linii/coloane)       */
-#define NPROCS 4     /* Numarul asteptat de procese MPI         */
+#define N 1000          /* Numarul de noduri (linii/coloane)       */
+#define NPROCS 5     /* Numarul asteptat de procese MPI         */
 #define INF 99999    /* Reprezentarea infinitului pentru graf   */
 #define MAX_DIST 50  /* Distanta maxima aleatoare               */
 #define DENSITY 70   /* Procentaj de muchii: 0-100 (70%)        */
@@ -99,14 +99,14 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                if (D[i * N + j] == INF)
-                    printf("  INF");
-                else
-                    printf(" %4d", D[i * N + j]);
+                //if (D[i * N + j] == INF)
+                //     printf("  INF");
+                // else
+                //     printf(" %4d", D[i * N + j]);
             }
-            printf("\n");
+            // printf("\n");
         }
-        printf("\n");
+        // printf("\n");
     }
 
     /* Asiguram sincronizarea inainte de a porni cronometrul */
@@ -189,17 +189,17 @@ int main(int argc, char *argv[])
     if (rank == 0)
     {
         printf("Matricea finala a distantelor minime:\n");
-        for (int i = 0; i < N; i++)
-        {
-            for (int j = 0; j < N; j++)
-            {
-                if (D[i * N + j] == INF)
-                    printf("  INF");
-                else
-                    printf(" %4d", D[i * N + j]);
-            }
-            printf("\n");
-        }
+        // for (int i = 0; i < N; i++)
+        // {
+        //     for (int j = 0; j < N; j++)
+        //     {
+        //         // if (D[i * N + j] == INF)
+        //         //     printf("  INF");
+        //         // else
+        //         //     printf(" %4d", D[i * N + j]);
+        //     }
+        //     // printf("\n");
+        // }
 
         printf("\n=== TIMP DE EXECUTIE ===\n");
         printf("Timp MPI Roy-Floyd (random): %f secunde\n", end_time - start_time);
